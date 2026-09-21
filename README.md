@@ -1,150 +1,183 @@
 <p align="center">
-  <strong>O ESTAGIÁRIO</strong><br>
-  <sub>IA CONTÁBIO · AUTOMAÇÃO PARA ESCRITÓRIOS CONTÁBEIS</sub>
+  <picture>
+    <source media="(max-width: 600px)" srcset="./assets/showcase/hero-mobile.png">
+    <img src="./assets/showcase/hero-desktop.png" width="100%" alt="O ESTAGIÁRIO — IA CONTÁBIO. Não é mais um sistema contábil. É o sistema que opera os seus sistemas. O contador decide; a automação prepara. Em desenvolvimento.">
+  </picture>
 </p>
 
+<p align="center"><strong>Buscar documentos. Organizar informações. Preparar conferências.<br>Automatizar o trabalho entre os sistemas que seu escritório já usa.</strong></p>
+<p align="center">O ESTAGIÁRIO combina inteligência artificial, robôs e integrações para tirar a repetição do centro da rotina contábil. <strong>Não é uma proposta de troca de ERP. É uma camada de execução para trabalhar com ele.</strong></p>
+
+<p align="center">
+  <a href="#user-content-rotinas"><img src="./assets/showcase/botao-rotinas.png" width="230" alt="Conheça as rotinas"></a>
+  <a href="#user-content-animacao"><img src="./assets/showcase/botao-video.png" width="230" alt="Veja a animação oficial"></a>
+</p>
+<p align="center"><a href="#user-content-proposta">A proposta</a> · <a href="#user-content-fluxo">Como funciona</a> · <a href="#user-content-integracoes">Integrações</a> · <a href="#user-content-duvidas">Perguntas frequentes</a> · <a href="#user-content-apoie">Apoie com uma estrela</a></p>
+<p align="center"><sub>Desenvolvimento ativo · Pilotos controlados · Disponibilidade por rotina homologada</sub></p>
+
+<hr>
+
+<a name="proposta"></a>
+<h2>Seu escritório não precisa de mais cliques.<br>Precisa de mais trabalho resolvido.</h2>
+
+<p>Todo dia, alguém busca uma nota, confere um cadastro, verifica um certificado e leva um arquivo de um sistema para outro. A informação já existe. <strong>O que falta é conectar o trabalho.</strong></p>
+<p>É nesse espaço que O ESTAGIÁRIO atua: preparar a parte operacional para que a equipe concentre atenção nas exceções, na análise e no cliente.</p>
+
+<table width="100%">
+  <tr>
+    <td width="50%" valign="top">
+      <p><sub>MENOS TEMPO NO REPETITIVO</sub></p>
+      <h3>De sistema em sistema.</h3>
+      <p>Buscar arquivo por arquivo.<br>Repetir informações já cadastradas.<br>Descobrir um bloqueio só no fim.<br>Refazer uma rotina sem saber onde parou.</p>
+    </td>
+    <td width="50%" valign="top">
+      <p><sub>MAIS FOCO NO QUE EXIGE VOCÊ</sub></p>
+      <h3>Da informação à decisão.</h3>
+      <p>Conferir documentos organizados.<br>Tratar pendências identificadas.<br>Consultar o histórico da execução.<br>Orientar o cliente com mais contexto.</p>
+    </td>
+  </tr>
+</table>
+
+<blockquote><p><strong>Seu contador não precisa ser substituído.<br>O trabalho repetitivo dele é que precisa ser repensado.</strong></p></blockquote>
+
+<a name="rotinas"></a>
+<h2>O que ele faz, na prática.</h2>
+<p>Estas são as frentes do produto. Há componentes exercitados e integrações em evolução; <a href="#user-content-integracoes">veja o estágio de cada frente</a>.</p>
+
+<table width="100%">
+  <tr>
+    <td width="50%" valign="top">
+      <p><sub>01 / COLETA FISCAL</sub></p>
+      <h3>📥 Notas no lugar certo.</h3>
+      <p>Reúne recursos de <strong>NF-e/DF-e e NFS-e</strong> a partir de fontes autorizadas. Organiza documentos por empresa, competência e direção, conforme a cobertura de cada fonte.</p>
+      <p><strong>Para a equipe:</strong> menos procura dispersa, mais material para conferir.</p>
+    </td>
+    <td width="50%" valign="top">
+      <p><sub>02 / CADASTRO</sub></p>
+      <h3>🧩 Menos redigitação.</h3>
+      <p>Parte de uma fonte online aprovada e cruza <strong>identidade, cadastro, certificado e destinos</strong>. Informações ausentes ou conflitantes viram pendências, não decisões improvisadas.</p>
+      <p><strong>Para a equipe:</strong> reaproveitar informação em vez de cadastrá-la de novo.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <p><sub>03 / CERTIFICADOS</sub></p>
+      <h3>🛡️ Atenção antes do bloqueio.</h3>
+      <p>Destaca <strong>certificados próximos do vencimento e já vencidos</strong>, relacionando os alertas às empresas que precisam de atenção.</p>
+      <p><strong>Para a equipe:</strong> entender o que impede uma rotina e antecipar a renovação.</p>
+    </td>
+    <td width="50%" valign="top">
+      <p><sub>04 / CONFERÊNCIA</sub></p>
+      <h3>📊 Números com origem.</h3>
+      <p>Prepara <strong>resumos e relatórios</strong> com valores observados, retenções, cancelamentos e origem da informação, conforme o documento e o fluxo.</p>
+      <p><strong>Para a equipe:</strong> conferir o resultado e saber de onde ele veio.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <p><sub>05 / WEB + WINDOWS</sub></p>
+      <h3>🖥️ Seus sistemas continuam.</h3>
+      <p>Prioriza <strong>APIs e importações oficiais</strong>. Quando esses canais não bastam, prepara robôs para executar procedimentos autorizados nas telas.</p>
+      <p><strong>Para a equipe:</strong> conectar etapas sem reinventar o sistema contábil.</p>
+    </td>
+    <td width="50%" valign="top">
+      <p><sub>06 / PRÓXIMA ETAPA · EM DESENVOLVIMENTO</sub></p>
+      <h3>🧮 Prévia para revisar.</h3>
+      <p>A frente Sittax busca obter a <strong>prévia do Simples Nacional</strong> de uma empresa e competência autorizadas, com confirmação do resultado.</p>
+      <p><strong>Limite atual:</strong> fluxo em desenvolvimento; transmissão e envio ao cliente não fazem parte da prévia.</p>
+    </td>
+  </tr>
+</table>
+
+<a name="fluxo"></a>
+<h2>Uma rotina autorizada. Um caminho verificável.</h2>
+<p>O objetivo é simples: <strong>você define o escopo, o robô executa o procedimento e a equipe confere o resultado.</strong> A IA ajuda a interpretar; não recebe uma autorização irrestrita para agir.</p>
+<p align="center">
+  <picture>
+    <source media="(max-width: 600px)" srcset="./assets/showcase/fluxo-mobile.png">
+    <img src="./assets/showcase/fluxo-desktop.png" width="100%" alt="Visão do fluxo: 1. Você define empresa, período e rotina autorizada. 2. O robô coleta, organiza e registra o caminho. 3. Você confere resultado, pendências e origem da informação.">
+  </picture>
+</p>
+<p><strong>Automação também é saber parar.</strong> Empresa errada, competência divergente ou resultado incerto não devem virar outro clique às cegas. Identidade, estado da execução e evidências fazem parte do desenho do produto.</p>
+
+<a name="animacao"></a>
+<h2>A marca ganha vida.</h2>
+<p>Conheça a identidade visual do O ESTAGIÁRIO na <strong>animação original de abertura do aplicativo</strong>.</p>
 <p align="center">
   <a href="./assets/estagiario-splash.mp4">
     <picture>
-      <source media="(prefers-reduced-motion: reduce)" srcset="./assets/estagiario-splash-dark.png">
-      <img src="./assets/estagiario-splash.gif" alt="Abertura animada do O ESTAGIÁRIO: a identidade ganha vida em azul e ciano." width="800">
+      <source media="(prefers-reduced-motion: reduce)" srcset="./assets/showcase/animation-poster.png">
+      <img src="./assets/estagiario-splash.gif" width="720" alt="Animação original do O ESTAGIÁRIO, com a marca em azul e ciano. Clique para abrir o vídeo MP4.">
     </picture>
   </a>
 </p>
-
-<h1 align="center">Não é mais um<br>sistema contábil.</h1>
-<h3 align="center">É o sistema que opera<br>os seus sistemas.</h3>
-
-<p align="center">Inteligência artificial e robôs para conectar tarefas, operar fluxos autorizados e transformar documentos em informação útil. Sua equipe mantém o controle. O trabalho repetitivo deixa de ocupar o centro do dia.</p>
-
-<p align="center">
-  <img alt="Stars" src="https://img.shields.io/github/stars/thiagocfaria/O-ESTAGIARIO-PUBLIC?style=for-the-badge&logo=github&label=STARS">
-  <img alt="Projeto proprietário" src="https://img.shields.io/badge/CÓDIGO-PROPRIETÁRIO-0B1220?style=for-the-badge">
-  <img alt="Automação contábil" src="https://img.shields.io/badge/FOCO-AUTOMAÇÃO%20CONTÁBIL-06B6D4?style=for-the-badge">
-</p>
-
-<p align="center"><a href="#user-content-por-que">A proposta</a> · <a href="#user-content-capacidades">O que faz</a> · <a href="#user-content-integracoes">Integrações</a> · <a href="#user-content-historia">Nossa história</a></p>
-<p align="center"><sub>A animação acima vem da abertura original do aplicativo. <a href="./assets/estagiario-splash.mp4">Ver o vídeo com áudio.</a></sub></p>
-<hr>
-
-<a name="por-que"></a>
-<h2>Seu escritório precisa de mais capacidade.<br>Não de mais tarefas manuais.</h2>
-
-<p>Buscar notas. Repetir cadastros. Conferir arquivos. Acompanhar certificados. Abrir um sistema para levar informação a outro. Quando essas tarefas dominam a rotina, sobra pouco tempo para analisar o negócio do cliente.</p>
-
-<p><strong>O ESTAGIÁRIO nasce para mudar essa relação.</strong> Em vez de obrigar o escritório a trocar todo o ambiente contábil, a plataforma combina IA, robôs e integrações para trabalhar com as ferramentas que já fazem parte da operação.</p>
-
-<blockquote>
-  <p><strong>Menos tempo movimentando informação.<br>Mais tempo transformando informação em orientação para o cliente.</strong></p>
-</blockquote>
-
-<a name="capacidades"></a>
-<h2>Da coleta à conferência.</h2>
-
-<h3>01 · Cadastro sem redigitação.</h3>
-<p>A automação cruza identidade da empresa, cadastro, certificado e destinos já conhecidos para reduzir repetição manual. Quando falta informação ou existe conflito, o fluxo deve parar e sinalizar a pendência em vez de adivinhar.</p>
-
-<h3>02 · Documentos reunidos e organizados.</h3>
-<p>O projeto reúne rotinas para trabalhar com <strong>NF-e, NFC-e, NFS-e e outros documentos fiscais</strong>, organizando o que foi coletado por empresa, competência e finalidade.</p>
-<h3>03 · Certificados sob controle.</h3>
-<p>O painel pode destacar certificados próximos do vencimento, expirados ou ausentes e relacionar isso às empresas que precisam de atenção antes que a rotina seja bloqueada.</p>
-
-<h3>04 · Informação pronta para conferir.</h3>
-<p>Documentos e rotinas alimentam <strong>resumos, evidências e relatórios de conferência</strong>. A meta não é produzir uma caixa-preta: é conseguir responder de onde veio o número, qual etapa executou e o que ainda depende de revisão.</p>
-
-<h3>05 · Robôs que operam o ecossistema existente.</h3>
-<p>Quando não existe API ou importação oficial suficiente, o projeto usa automação web e desktop para executar procedimentos aprovados em portais e sistemas já utilizados pelo escritório.</p>
-
-<blockquote>
-  <p><strong>A IA ajuda a interpretar. Os robôs executam as rotinas autorizadas. O contador mantém o julgamento profissional.</strong></p>
-</blockquote>
-
-<hr>
+<p align="center"><a href="./assets/estagiario-splash.mp4"><strong>▶ Abrir o vídeo original</strong></a><br><sub>Animação de marca. Não é uma demonstração completa das funcionalidades.</sub></p>
 
 <a name="integracoes"></a>
-<h2>Não substitui seus sistemas.<br>Conecta o trabalho entre eles.</h2>
+<h2>Construído para o mundo real.<br>Validado uma rotina por vez.</h2>
+<p>Não prometemos operar qualquer sistema com um único clique. Cada integração precisa de acesso autorizado, procedimento conhecido e validação própria.</p>
 
-<p>A proposta não é colocar mais uma tela entre o contador e o serviço. É construir uma camada de execução capaz de trabalhar com <strong>portais, APIs, arquivos e aplicações Windows</strong>, reduzindo a passagem manual de uma etapa para a seguinte.</p>
-
-<table>
-  <tr><th align="left">Frente</th><th align="left">Direção</th></tr>
-  <tr><td><strong>Coleta fiscal</strong></td><td>Buscar, validar e organizar documentos por empresa e competência.</td></tr>
-  <tr><td><strong>Sistemas contábeis</strong></td><td>Integrar rotinas homologadas sem reinventar o ERP.</td></tr>
-  <tr><td><strong>Sittax / Simples Nacional</strong></td><td>Prévia assistida em desenvolvimento, separada de qualquer transmissão automática.</td></tr>
-  <tr><td><strong>Windows e web</strong></td><td>Automação determinística quando um canal oficial melhor não estiver disponível.</td></tr>
+<table width="100%">
+  <tr><th align="left">Frente</th><th align="left">Estágio apresentado</th></tr>
+  <tr><td><strong>Documentos, cadastros e conferência</strong></td><td>Componentes e pilotos documentados; cobertura varia por fonte, acesso e operação.</td></tr>
+  <tr><td><strong>Domínio</strong></td><td>Integração progressiva, com homologação por processo.</td></tr>
+  <tr><td><strong>Sittax / Simples Nacional</strong></td><td>Automação da prévia em desenvolvimento. Não anunciada como operação completa em produção.</td></tr>
+  <tr><td><strong>SAAM e novas rotinas</strong></td><td>Expansão planejada, condicionada à descoberta e à validação.</td></tr>
 </table>
-<h2>Uma automação que sabe parar.</h2>
-
-<p>Automatizar não é apenas clicar rápido. Em rotinas contábeis, a capacidade de <strong>validar identidade, registrar estado, retomar uma execução e não duplicar um efeito incerto</strong> é parte do produto.</p>
-
-<p>Por isso, o projeto evolui com princípios simples:</p>
-
-<ul>
-  <li>empresa e competência precisam ser confirmadas antes de qualquer efeito;</li>
-  <li>ações sensíveis exigem autorização explícita;</li>
-  <li>uma queda não deve virar um segundo clique às cegas;</li>
-  <li>logs e evidências existem para explicar a execução, não para esconder o problema;</li>
-  <li>APIs e importações oficiais têm preferência sobre automação de tela.</li>
-</ul>
-
-<h2>Mais contexto para responder.<br>Mais tempo para orientar.</h2>
-
-<p>A experiência conversacional aproxima a IA dos relatórios e arquivos autorizados do escritório. Em vez de respostas genéricas, o objetivo é ajudar o contador a localizar informação, compreender uma pendência e chegar às evidências.</p>
-
-<blockquote>
-  <p>“Quais empresas precisam de atenção hoje?”<br>
-  “O que mudou desde a última conferência?”<br>
-  “De onde veio este valor?”</p>
-</blockquote>
-
-<details>
-<summary><strong>Privacidade, nuvem e limites</strong></summary>
-<p>O ESTAGIÁRIO é um projeto em desenvolvimento e não deve ser confundido com uma certificação fiscal, jurídica ou de conformidade. A arquitetura busca minimizar dados enviados a serviços externos e reservar operações sensíveis para fluxos autorizados. A configuração de cada implantação determina o que permanece local e o que utiliza provedores externos.</p>
-<p>Relatórios e prévias apoiam a conferência profissional; não substituem automaticamente escrituração, declarações oficiais, transmissão de obrigações ou revisão do contador responsável.</p>
-</details>
-<hr>
+<p><a href="./ROADMAP.md"><strong>Veja a direção do produto no roadmap público →</strong></a></p>
 
 <a name="historia"></a>
-<h2>Nasceu de um problema real.<br>E de uma pergunta simples.</h2>
+<h2>Nasceu dentro da rotina.<br>Não de uma apresentação de slides.</h2>
+<p>Durante seu estágio em Ciências Econômicas na <strong>Prótons Consultoria, em Goiânia</strong>, Thiago Caetano Faria encontrou um problema concreto: profissionais preparados para analisar empresas gastavam parte do dia movimentando informações entre sistemas.</p>
+<p>O ESTAGIÁRIO nasceu da ideia de um apoio digital para <strong>preparar o trabalho, registrar o que fez e levar ao contador o que precisa de atenção</strong>. A tecnologia entra para ampliar a capacidade da equipe — não para tomar seu julgamento profissional.</p>
+<p><a href="https://github.com/thiagocfaria"><strong>Conheça Thiago Caetano Faria, criador do projeto →</strong></a></p>
 
-<p>O ESTAGIÁRIO começou dentro da rotina de um escritório contábil em Goiânia. O problema era visível: profissionais preparados para analisar empresas gastavam parte do dia procurando documentos, repetindo cadastros e transportando informação entre sistemas.</p>
-
-<blockquote>
-  <p><strong>E se o escritório tivesse um estagiário digital para preparar o trabalho, registrar o que fez e levar ao contador somente o que realmente precisa de atenção?</strong></p>
-</blockquote>
-
-<p>Dessa pergunta surgiu o projeto: uma proposta de IA contábil que combina automação, cálculos verificáveis e acompanhamento operacional. Não para substituir o contador, mas para ampliar a capacidade de atender bem e entregar informação útil ao cliente.</p>
-
-<p><strong>Thiago Caetano Faria</strong><br>Desenvolvedor do O ESTAGIÁRIO, com foco em inteligência artificial aplicada e automação de processos contábeis.</p>
+<a name="duvidas"></a>
+<h2>Antes de você perguntar.</h2>
 
 <details>
-<summary><strong>O que este repositório público contém?</strong></summary>
-<p>Esta é a <strong>vitrine pública</strong> do O ESTAGIÁRIO. Ela contém apresentação, identidade visual, animação oficial e roadmap público. O código-fonte do produto permanece proprietário e não é distribuído por este repositório.</p>
-<p>Também não são publicados aqui credenciais, certificados, configurações internas, dados de clientes ou artefatos fiscais.</p>
+  <summary><strong>Preciso trocar meu sistema contábil?</strong></summary>
+  <p>Essa não é a proposta. O ESTAGIÁRIO é desenvolvido para trabalhar com o ecossistema existente. Isso não significa compatibilidade automática com todos os sistemas: cada rotina precisa ser integrada e homologada.</p>
 </details>
 
 <details>
-<summary><strong>Qual é o estágio atual?</strong></summary>
-<p>O projeto está em desenvolvimento ativo, com componentes testados em laboratório e fluxos reais controlados. Cada integração é promovida gradualmente conforme o procedimento é observado, automatizado, testado e homologado. Presença de código ou demonstração não significa disponibilidade geral em produção.</p>
+  <summary><strong>É só um chat que responde perguntas?</strong></summary>
+  <p>Não é essa a proposta. A experiência combina conversa, robôs e integrações. A IA ajuda a interpretar informações; a execução repetitiva fica em procedimentos autorizados e verificáveis.</p>
 </details>
+
+<details>
+  <summary><strong>Já posso usar todas essas rotinas em produção?</strong></summary>
+  <p>Não. O produto está em desenvolvimento ativo, com pilotos e componentes exercitados. Demonstração, código existente e testes de laboratório não significam disponibilidade geral. A liberação é feita por fluxo homologado.</p>
+</details>
+
+<details>
+  <summary><strong>Meus dados ficam sempre no computador do escritório?</strong></summary>
+  <p>Depende da implantação e dos provedores configurados. Existem operações locais, mas a camada de IA pode utilizar serviços externos. Um ambiente inteiramente local exige configuração e verificação próprias; esta apresentação não é uma declaração de conformidade integral com a LGPD.</p>
+</details>
+
+<details>
+  <summary><strong>A prévia substitui o fechamento ou transmite obrigações?</strong></summary>
+  <p>Não. Relatórios e prévias apoiam a conferência. Não substituem automaticamente a escrituração, o PGDAS-D, a transmissão de obrigações ou a revisão do profissional responsável. A frente atual de prévia do Sittax não inclui transmissão.</p>
+</details>
+
+<details>
+  <summary><strong>Por que o repositório é público, mas o código não está aqui?</strong></summary>
+  <p>Este é o espaço público de apresentação e acompanhamento. O código-fonte do produto é proprietário e continua privado. Aqui ficam a identidade visual, os materiais de apresentação e o roadmap — não credenciais, certificados ou dados de clientes.</p>
+</details>
+
+<br>
+
+<a name="apoie"></a>
+<p align="center">
+  <picture>
+    <source media="(max-width: 600px)" srcset="./assets/showcase/convite-mobile.png">
+    <img src="./assets/showcase/convite-desktop.png" width="100%" alt="Menos tarefas repetidas. Mais tempo para o cliente. Acompanhe a construção do O ESTAGIÁRIO.">
+  </picture>
+</p>
+<h2 align="center">Esse problema também existe no seu escritório?</h2>
+<p align="center"><strong>Deixe uma ⭐ no topo do repositório e acompanhe a evolução.</strong><br>Sua estrela ajuda outras pessoas a encontrar o projeto.</p>
+<p align="center"><a href="https://github.com/thiagocfaria/O-ESTAGIARIO-PUBLIC/issues/new?title=Sugest%C3%A3o%20de%20rotina"><strong>💬 Conte qual rotina você automatizaria</strong></a> · <a href="./ROADMAP.md"><strong>🧭 Veja o roadmap</strong></a></p>
+<p align="center"><sub>Nas sugestões, não inclua credenciais, documentos fiscais ou dados identificáveis de clientes.</sub></p>
+
 <hr>
-
-<h2 align="center">Seu escritório já tem os sistemas.<br>O próximo passo é fazer a rotina fluir.</h2>
-
-<p align="center">
-  <img src="./assets/estagiario-marca.png" alt="Símbolo O ESTAGIÁRIO" width="74">
-</p>
-
-<p align="center"><strong>O ESTAGIÁRIO</strong><br>Menos operação repetitiva. Mais capacidade para cuidar do cliente.</p>
-
-<p align="center">
-  <a href="./ROADMAP.md"><strong>Ver roadmap</strong></a>
-  ·
-  <a href="./assets/estagiario-splash.mp4"><strong>Assistir ao vídeo</strong></a>
-  ·
-  <a href="https://github.com/thiagocfaria"><strong>Conhecer o desenvolvedor</strong></a>
-</p>
-
-<p align="center"><strong>⭐ Se esse problema também existe no seu escritório, deixe uma estrela e acompanhe a evolução.</strong></p>
-
-<p align="center"><sub>Vitrine pública · código proprietário · Goiânia, Goiás · desenvolvimento e homologação progressivos</sub></p>
+<p align="center"><strong>O ESTAGIÁRIO · IA CONTÁBIO</strong><br><sub>Goiânia, Goiás · Código proprietário · Desenvolvimento e homologação progressivos</sub><br><sub>Marcas de terceiros pertencem aos seus titulares. Menção não implica afiliação.</sub></p>
