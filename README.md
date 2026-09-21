@@ -46,45 +46,51 @@
 
 <table width="100%">
   <tr>
-    <td width="50%" valign="top">
-      <p><sub>01 / COLETA FISCAL</sub></p>
-      <h3>📥 Notas no lugar certo.</h3>
-      <p>Reúne recursos de <strong>NF-e/DF-e e NFS-e</strong> a partir de fontes autorizadas. Organiza documentos por empresa, competência e direção, conforme a cobertura de cada fonte.</p>
-      <p><strong>Para a equipe:</strong> menos procura dispersa, mais material para conferir.</p>
-    </td>
-    <td width="50%" valign="top">
-      <p><sub>02 / CADASTRO</sub></p>
-      <h3>🧩 Menos redigitação.</h3>
-      <p>Parte de uma fonte online aprovada e cruza <strong>identidade, cadastro, certificado e destinos</strong>. Informações ausentes ou conflitantes viram pendências, não decisões improvisadas.</p>
-      <p><strong>Para a equipe:</strong> reaproveitar informação em vez de cadastrá-la de novo.</p>
+    <td width="64" align="center" valign="top"><br><img src="./assets/showcase/icone-notas.png" width="48" alt="Coleta Fiscal"></td>
+    <td>
+      <p><sub>01 / COLETA FISCAL</sub><br><strong>Notas no lugar certo.</strong></p>
+      <p>Recursos de <strong>NF-e/DF-e e NFS-e</strong> para reunir documentos de fontes autorizadas e organizá-los por empresa, competência e direção.</p>
+      <p><strong>Para a equipe:</strong> Menos procura dispersa. Mais material para conferir.</p>
     </td>
   </tr>
   <tr>
-    <td width="50%" valign="top">
-      <p><sub>03 / CERTIFICADOS</sub></p>
-      <h3>🛡️ Atenção antes do bloqueio.</h3>
-      <p>Destaca <strong>certificados próximos do vencimento e já vencidos</strong>, relacionando os alertas às empresas que precisam de atenção.</p>
-      <p><strong>Para a equipe:</strong> entender o que impede uma rotina e antecipar a renovação.</p>
-    </td>
-    <td width="50%" valign="top">
-      <p><sub>04 / CONFERÊNCIA</sub></p>
-      <h3>📊 Números com origem.</h3>
-      <p>Prepara <strong>resumos e relatórios</strong> com valores observados, retenções, cancelamentos e origem da informação, conforme o documento e o fluxo.</p>
-      <p><strong>Para a equipe:</strong> conferir o resultado e saber de onde ele veio.</p>
+    <td width="64" align="center" valign="top"><br><img src="./assets/showcase/icone-cadastro.png" width="48" alt="Cadastro"></td>
+    <td>
+      <p><sub>02 / CADASTRO</sub><br><strong>Menos redigitação.</strong></p>
+      <p>Uma fonte online aprovada como ponto de partida. A automação cruza <strong>identidade, cadastro, certificado e destinos</strong>; conflitos viram pendências.</p>
+      <p><strong>Para a equipe:</strong> Reaproveitar informação em vez de cadastrá-la outra vez.</p>
     </td>
   </tr>
   <tr>
-    <td width="50%" valign="top">
-      <p><sub>05 / WEB + WINDOWS</sub></p>
-      <h3>🖥️ Seus sistemas continuam.</h3>
-      <p>Prioriza <strong>APIs e importações oficiais</strong>. Quando esses canais não bastam, prepara robôs para executar procedimentos autorizados nas telas.</p>
-      <p><strong>Para a equipe:</strong> conectar etapas sem reinventar o sistema contábil.</p>
+    <td width="64" align="center" valign="top"><br><img src="./assets/showcase/icone-certificados.png" width="48" alt="Certificados"></td>
+    <td>
+      <p><sub>03 / CERTIFICADOS</sub><br><strong>Atenção antes do bloqueio.</strong></p>
+      <p>O painel destaca <strong>certificados próximos do vencimento e já vencidos</strong>, junto das empresas que precisam de atenção.</p>
+      <p><strong>Para a equipe:</strong> Antecipar a renovação e entender por que uma rotina parou.</p>
     </td>
-    <td width="50%" valign="top">
-      <p><sub>06 / PRÓXIMA ETAPA · EM DESENVOLVIMENTO</sub></p>
-      <h3>🧮 Prévia para revisar.</h3>
-      <p>A frente Sittax busca obter a <strong>prévia do Simples Nacional</strong> de uma empresa e competência autorizadas, com confirmação do resultado.</p>
-      <p><strong>Limite atual:</strong> fluxo em desenvolvimento; transmissão e envio ao cliente não fazem parte da prévia.</p>
+  </tr>
+  <tr>
+    <td width="64" align="center" valign="top"><br><img src="./assets/showcase/icone-relatorios.png" width="48" alt="Conferência"></td>
+    <td>
+      <p><sub>04 / CONFERÊNCIA</sub><br><strong>Números com origem.</strong></p>
+      <p><strong>Resumos e relatórios</strong> com valores observados, retenções, cancelamentos e origem da informação, conforme o documento e o fluxo.</p>
+      <p><strong>Para a equipe:</strong> Conferir o resultado e saber de onde ele veio.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="64" align="center" valign="top"><br><img src="./assets/showcase/icone-sistemas.png" width="48" alt="Web + Windows"></td>
+    <td>
+      <p><sub>05 / WEB + WINDOWS</sub><br><strong>Seus sistemas continuam.</strong></p>
+      <p><strong>APIs e importações oficiais primeiro.</strong> Quando esses canais não bastam, robôs executam procedimentos autorizados nas telas.</p>
+      <p><strong>Para a equipe:</strong> Conectar etapas sem reinventar o sistema contábil.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="64" align="center" valign="top"><br><img src="./assets/showcase/icone-previa.png" width="48" alt="Em Desenvolvimento"></td>
+    <td>
+      <p><sub>06 / EM DESENVOLVIMENTO</sub><br><strong>Prévia para revisar.</strong></p>
+      <p>A frente Sittax busca obter a <strong>prévia do Simples Nacional</strong> para empresa e competência autorizadas, com confirmação do resultado.</p>
+      <p><strong>Limite atual:</strong> Não anunciada como pronta. Transmissão e envio ao cliente ficam fora da prévia.</p>
     </td>
   </tr>
 </table>
@@ -176,7 +182,7 @@
 </p>
 <h2 align="center">Esse problema também existe no seu escritório?</h2>
 <p align="center"><strong>Deixe uma ⭐ no topo do repositório e acompanhe a evolução.</strong><br>Sua estrela ajuda outras pessoas a encontrar o projeto.</p>
-<p align="center"><a href="https://github.com/thiagocfaria/O-ESTAGIARIO-PUBLIC/issues/new?title=Sugest%C3%A3o%20de%20rotina"><strong>💬 Conte qual rotina você automatizaria</strong></a> · <a href="./ROADMAP.md"><strong>🧭 Veja o roadmap</strong></a></p>
+<p align="center"><a href="https://github.com/thiagocfaria/O-ESTAGIARIO-PUBLIC/issues/new?title=Sugest%C3%A3o%20de%20rotina"><strong>Conte qual rotina você automatizaria →</strong></a> · <a href="./ROADMAP.md"><strong>Veja o roadmap →</strong></a></p>
 <p align="center"><sub>Nas sugestões, não inclua credenciais, documentos fiscais ou dados identificáveis de clientes.</sub></p>
 
 <hr>
