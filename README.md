@@ -12,7 +12,7 @@
   <a href="#user-content-rotinas"><img src="./assets/showcase/botao-rotinas.png" width="230" alt="Conheça as rotinas"></a>
   <a href="#user-content-animacao"><img src="./assets/showcase/botao-video.png" width="230" alt="Veja a animação oficial"></a>
 </p>
-<p align="center"><a href="#user-content-proposta">A proposta</a> · <a href="#user-content-fluxo">Como funciona</a> · <a href="#user-content-integracoes">Integrações</a> · <a href="#user-content-duvidas">Perguntas frequentes</a> · <a href="#user-content-apoie">Apoie com uma estrela</a></p>
+<p align="center"><a href="#user-content-proposta">A proposta</a> · <a href="#user-content-fluxo">Como funciona</a> · <a href="#user-content-integracoes">Integrações</a> · <a href="#user-content-tecnica">Visão técnica</a> · <a href="#user-content-duvidas">Perguntas frequentes</a> · <a href="#user-content-apoie">Apoie com uma estrela</a></p>
 <p align="center"><sub>Desenvolvimento ativo · Pilotos controlados · Disponibilidade por rotina homologada</sub></p>
 
 <hr>
@@ -132,6 +132,16 @@
 </table>
 <p><a href="./ROADMAP.md"><strong>Veja a direção do produto no roadmap público →</strong></a></p>
 
+<a name="tecnica"></a>
+<h2>Para quem quer olhar além da apresentação.</h2>
+<p><strong>Arquitetura, decisões e resultados com contexto.</strong> A área técnica explica como o projeto separa IA e execução, trata falhas, confere documentos e delimita cada integração — sem distribuir o código proprietário.</p>
+<table width="100%">
+  <tr><th align="left">Entenda a engenharia</th><th align="left">Avalie a evidência</th></tr>
+  <tr><td><a href="./docs/tecnica/ARQUITETURA.md">Arquitetura e responsabilidades</a><br><a href="./docs/tecnica/CONFIABILIDADE.md">Retomada sem repetição cega</a><br><a href="./docs/tecnica/DADOS-E-PRIVACIDADE.md">Dados com origem e privacidade</a></td><td><a href="./docs/tecnica/EVIDENCIAS.md">Caderno de evidências E01–E05</a><br><a href="./docs/tecnica/INTEGRACOES.md">Estágio real de cada integração</a><br><a href="./docs/tecnica/AVALIACAO.md">Como avaliar um piloto</a></td></tr>
+</table>
+<p><strong>Entre os registros revisados:</strong> 35 testes da fundação sintética Sittax; três canários reais de coleta SEFAZ GO documentados; análise local de 5.000 XMLs sintéticos; e uma rodada real com confirmação de novos documentos no destino. Cada resultado tem data, escopo e limites no <a href="./docs/tecnica/EVIDENCIAS.md">caderno de evidências</a> — não são métricas ao vivo nem uma homologação global do produto.</p>
+<p><a href="./docs/tecnica/README.md"><strong>Explorar a visão técnica completa →</strong></a></p>
+
 <a name="historia"></a>
 <h2>Nasceu dentro da rotina.<br>Não de uma apresentação de slides.</h2>
 <p>Durante seu estágio em Ciências Econômicas na <strong>Prótons Consultoria, em Goiânia</strong>, Thiago Caetano Faria encontrou um problema concreto: profissionais preparados para analisar empresas gastavam parte do dia movimentando informações entre sistemas.</p>
@@ -168,7 +178,7 @@
 
 <details>
   <summary><strong>Por que o repositório é público, mas o código não está aqui?</strong></summary>
-  <p>Este é o espaço público de apresentação e acompanhamento. O código-fonte do produto é proprietário e continua privado. Aqui ficam a identidade visual, os materiais de apresentação e o roadmap — não credenciais, certificados ou dados de clientes.</p>
+  <p>Este é o espaço público de apresentação e acompanhamento. O código-fonte do produto é proprietário e continua privado. Aqui ficam a identidade visual, a documentação técnica de alto nível, os resumos de evidências e o roadmap — não credenciais, certificados, código interno ou dados de clientes.</p>
 </details>
 
 <br>
@@ -184,6 +194,7 @@
 <p align="center"><strong>Deixe uma ⭐ no topo do repositório e acompanhe a evolução.</strong><br>Sua estrela ajuda outras pessoas a encontrar o projeto.</p>
 <p align="center"><a href="https://github.com/thiagocfaria/O-ESTAGIARIO-PUBLIC/issues/new?title=Sugest%C3%A3o%20de%20rotina"><strong>Conte qual rotina você automatizaria →</strong></a> · <a href="./ROADMAP.md"><strong>Veja o roadmap →</strong></a></p>
 <p align="center"><sub>Nas sugestões, não inclua credenciais, documentos fiscais ou dados identificáveis de clientes.</sub></p>
+<p align="center"><a href="./CONTRIBUTING.md">Como contribuir</a> · <a href="./SECURITY.md">Relato privado de segurança</a> · <a href="./docs/tecnica/README.md">Documentação técnica</a></p>
 
 <hr>
 <p align="center"><strong>O ESTAGIÁRIO · IA CONTÁBIO</strong><br><sub>Goiânia, Goiás · Código proprietário · Desenvolvimento e homologação progressivos</sub><br><sub>Marcas de terceiros pertencem aos seus titulares. Menção não implica afiliação.</sub></p>
