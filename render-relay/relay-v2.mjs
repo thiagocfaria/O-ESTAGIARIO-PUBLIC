@@ -13,7 +13,8 @@ const MAX_INFLIGHT = 64;
 const REQUEST_TIMEOUT_MS = 310_000;
 const RANGE_REFRESH_MS = 15 * 60 * 1000;
 const WS_MAX_PAYLOAD = 96 * 1024 * 1024;
-const RESPONSE_QUEUE_LIMIT = 4 * 1024 * 1024;
+const RESPONSE_QUEUE_LIMIT = 1 * 1024 * 1024;
+const REQUEST_BUFFER_GLOBAL_LIMIT = 64 * 1024 * 1024;
 const KEEPALIVE_STALE_MS = 7 * 60 * 1000;
 
 let bridge = null;
@@ -25,6 +26,8 @@ let rangeError = null;
 
 const pending = new Map();
 const usedNonces = new Map();
+let admissions = 0;
+let requestBufferedBytes = 0;
 
 const HOP = new Set([
   "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
@@ -135,7 +138,11 @@ function endPending(id, status = null, payload = null) {
   clearTimeout(p.timer);
   pending.delete(id);
   if (p.res.destroyed) return;
-  if (status && !p.res.headersSent) {
+  if (status && p.res.headersSent) {
+    p.res.destroy();
+    return;
+  }
+  if (status) {
     p.res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" });
   }
   if (payload != null) p.res.end(typeof payload === "string" ? payload : JSON.stringify(payload));
@@ -186,7 +193,11 @@ const server = http.createServer((req, res) => {
       ranges: rangeNetworks.length,
       rangesUpdatedAt,
       rangeError,
-      limits: { requestBodyBytes: MAX_BODY, responseQueueBytes: RESPONSE_QUEUE_LIMIT },
+      limits: {
+        requestBodyBytes: MAX_BODY,
+        requestBufferGlobalBytes: REQUEST_BUFFER_GLOBAL_LIMIT,
+        responseQueueBytes: RESPONSE_QUEUE_LIMIT
+      },
     }));
     return;
   }
@@ -220,12 +231,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (pending.size >= MAX_INFLIGHT) {
+  if (pending.size + admissions >= MAX_INFLIGHT) {
     res.writeHead(429, { "content-type": "application/json", "cache-control": "no-store", "retry-after": "1" });
     res.end(JSON.stringify({ error: "busy" }));
     return;
   }
 
+  admissions += 1;
   const chunks = [];
   let size = 0;
   let rejected = false;
@@ -233,18 +245,25 @@ const server = http.createServer((req, res) => {
   req.on("data", chunk => {
     if (rejected) return;
     size += chunk.length;
-    if (size > MAX_BODY) {
+    if (size > MAX_BODY || requestBufferedBytes + chunk.length > REQUEST_BUFFER_GLOBAL_LIMIT) {
       rejected = true;
-      res.writeHead(413, { "content-type": "application/json", "cache-control": "no-store" });
-      res.end(JSON.stringify({ error: "request_too_large" }));
+      admissions = Math.max(0, admissions - 1);
+      requestBufferedBytes = Math.max(0, requestBufferedBytes - (size - chunk.length));
+      res.writeHead(size > MAX_BODY ? 413 : 429, {
+        "content-type": "application/json", "cache-control": "no-store", "retry-after": "1"
+      });
+      res.end(JSON.stringify({ error: size > MAX_BODY ? "request_too_large" : "request_buffer_busy" }));
       req.destroy();
       return;
     }
+    requestBufferedBytes += chunk.length;
     chunks.push(chunk);
   });
 
   req.on("end", () => {
     if (rejected) return;
+    admissions = Math.max(0, admissions - 1);
+    requestBufferedBytes = Math.max(0, requestBufferedBytes - size);
     const id = crypto.randomUUID();
     const timer = setTimeout(() => {
       if (!pending.has(id)) return;
