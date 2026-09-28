@@ -42,13 +42,19 @@ function cleanHeaders(headers, stripSecrets = true) {
   return out;
 }
 
-function getClientIp(req) {
-  const xff = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
-  let raw = xff || req.socket.remoteAddress || "";
+function normalizeIp(raw0) {
+  let raw = String(raw0 || "").trim();
   if (raw.startsWith("::ffff:")) raw = raw.slice(7);
   const zone = raw.indexOf("%");
   if (zone >= 0) raw = raw.slice(0, zone);
   return raw;
+}
+
+function getIngressCandidates(req) {
+  const cf = normalizeIp(req.headers["cf-connecting-ip"]);
+  const xffFirst = normalizeIp(String(req.headers["x-forwarded-for"] || "").split(",")[0]);
+  const remote = normalizeIp(req.socket.remoteAddress);
+  return [...new Set([cf, xffFirst, remote].filter(Boolean))];
 }
 
 function parseNetwork(prefix) {
@@ -194,17 +200,10 @@ const server = http.createServer((req, res) => {
   }
 
   if (isMcp) {
-    const ip = getClientIp(req);
-    if (!rangeNetworks.length || !ipAllowed(ip)) {
-      console.warn(JSON.stringify({
-        event: "request_denied",
-        reason: "source_ip",
-        ip,
-        xff: String(req.headers["x-forwarded-for"] || "").slice(0, 512),
-        cfConnectingIp: String(req.headers["cf-connecting-ip"] || "").slice(0, 128),
-        remoteAddress: String(req.socket.remoteAddress || "").slice(0, 128),
-        userAgent: String(req.headers["user-agent"] || "").slice(0, 256)
-      }));
+    const candidates = getIngressCandidates(req);
+    const trustedOpenAiIp = rangeNetworks.length ? candidates.find(ipAllowed) : null;
+    if (!trustedOpenAiIp) {
+      console.warn(JSON.stringify({ event: "request_denied", reason: "source_ip", candidates }));
       res.writeHead(403, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify({ error: "forbidden" }));
       return;
