@@ -1,0 +1,13 @@
+{
+  "name": "tcf-mcp-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "ipaddr.js": "2.2.0",
+    "ws": "8.18.3"
+  }
+}
