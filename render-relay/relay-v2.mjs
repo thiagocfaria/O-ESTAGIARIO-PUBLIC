@@ -196,7 +196,15 @@ const server = http.createServer((req, res) => {
   if (isMcp) {
     const ip = getClientIp(req);
     if (!rangeNetworks.length || !ipAllowed(ip)) {
-      console.warn(JSON.stringify({ event: "request_denied", reason: "source_ip", ip }));
+      console.warn(JSON.stringify({
+        event: "request_denied",
+        reason: "source_ip",
+        ip,
+        xff: String(req.headers["x-forwarded-for"] || "").slice(0, 512),
+        cfConnectingIp: String(req.headers["cf-connecting-ip"] || "").slice(0, 128),
+        remoteAddress: String(req.socket.remoteAddress || "").slice(0, 128),
+        userAgent: String(req.headers["user-agent"] || "").slice(0, 256)
+      }));
       res.writeHead(403, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify({ error: "forbidden" }));
       return;
