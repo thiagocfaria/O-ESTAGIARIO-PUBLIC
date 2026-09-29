@@ -22,6 +22,7 @@ let bridgeSince = null;
 let bridgeLastMessageAt = null;
 let rangeNetworks = [];
 let rangesUpdatedAt = null;
+let rangesFetchedAt = null;
 let rangeError = null;
 
 const pending = new Map();
@@ -94,8 +95,9 @@ async function refreshRanges() {
     if (!parsed.length) throw new Error("no valid prefixes");
     rangeNetworks = parsed;
     rangesUpdatedAt = data.creationTime || new Date().toISOString();
+    rangesFetchedAt = new Date().toISOString();
     rangeError = null;
-    console.log(JSON.stringify({ event: "openai_ranges_loaded", count: parsed.length, creationTime: rangesUpdatedAt }));
+    console.log(JSON.stringify({ event: "openai_ranges_loaded", count: parsed.length, creationTime: rangesUpdatedAt, fetchedAt: rangesFetchedAt }));
   } catch (err) {
     rangeError = String(err?.message || err);
     console.error(JSON.stringify({ event: "openai_ranges_error", error: rangeError }));
@@ -192,6 +194,7 @@ const server = http.createServer((req, res) => {
       maxInflight: MAX_INFLIGHT,
       ranges: rangeNetworks.length,
       rangesUpdatedAt,
+      rangesFetchedAt,
       rangeError,
       limits: {
         requestBodyBytes: MAX_BODY,
@@ -214,7 +217,8 @@ const server = http.createServer((req, res) => {
     const candidates = getIngressCandidates(req);
     const trustedOpenAiIp = rangeNetworks.length ? candidates.find(ipAllowed) : null;
     if (!trustedOpenAiIp) {
-      console.warn(JSON.stringify({ event: "request_denied", reason: "source_ip", candidates }));
+      const cfRay = String(req.headers["cf-ray"] || "").slice(0, 128) || null;
+      console.warn(JSON.stringify({ event: "request_denied", reason: "source_ip", cfRay, candidates, rangesUpdatedAt, rangesFetchedAt, rangeError }));
       res.writeHead(403, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify({ error: "forbidden" }));
       return;
@@ -271,8 +275,9 @@ const server = http.createServer((req, res) => {
       endPending(id, 504, { error: "upstream_timeout" });
     }, REQUEST_TIMEOUT_MS);
 
+    const cfRay = String(req.headers["cf-ray"] || "").slice(0, 128) || null;
     pending.set(id, {
-      res, timer, started: Date.now(), paused: false,
+      res, timer, started: Date.now(), paused: false, cfRay,
       queue: [], queuedBytes: 0, remoteEnded: false,
     });
 
@@ -377,7 +382,7 @@ wss.on("connection", ws => {
       if (p.queue.length || p.paused) {
         p.remoteEnded = true;
       } else {
-        console.log(JSON.stringify({ event: "request_done", ms: Date.now() - p.started }));
+        console.log(JSON.stringify({ event: "request_done", ms: Date.now() - p.started, cfRay: p.cfRay }));
         endPending(msg.id);
       }
       return;
