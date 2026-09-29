@@ -10,12 +10,13 @@ const PUBLIC_KEY = fs.readFileSync(new URL("./bridge-public.pem", import.meta.ur
 
 const MAX_BODY = 32 * 1024 * 1024;
 const MAX_INFLIGHT = 64;
-const REQUEST_TIMEOUT_MS = 310_000;
+const REQUEST_TIMEOUT_MS = 75_000;
 const RANGE_REFRESH_MS = 15 * 60 * 1000;
 const WS_MAX_PAYLOAD = 96 * 1024 * 1024;
 const RESPONSE_QUEUE_LIMIT = 1 * 1024 * 1024;
 const REQUEST_BUFFER_GLOBAL_LIMIT = 64 * 1024 * 1024;
 const KEEPALIVE_STALE_MS = 7 * 60 * 1000;
+const MCP_ACCESS_TOKEN = String(process.env.TCF_MCP_ACCESS_TOKEN || "");
 
 let bridge = null;
 let bridgeSince = null;
@@ -124,6 +125,29 @@ function verifySignedRequest(req, pathname) {
   return ok;
 }
 
+function verifyAccessToken(req) {
+  if (!MCP_ACCESS_TOKEN) return false;
+  const auth = String(req.headers["authorization"] || "");
+  if (!auth.startsWith("Bearer ")) return false;
+  const provided = Buffer.from(auth.slice(7));
+  const expected = Buffer.from(MCP_ACCESS_TOKEN);
+  return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
+}
+
+function extractRpcMeta(body) {
+  try {
+    const payload = JSON.parse(body.toString("utf8"));
+    const rpcId = ["string", "number"].includes(typeof payload?.id) ? String(payload.id).slice(0, 128) : null;
+    const rpcMethod = typeof payload?.method === "string" ? payload.method.slice(0, 128) : null;
+    const toolName = rpcMethod === "tools/call" && typeof payload?.params?.name === "string"
+      ? payload.params.name.slice(0, 160)
+      : null;
+    return { rpcId, rpcMethod, toolName };
+  } catch {
+    return { rpcId: null, rpcMethod: null, toolName: null };
+  }
+}
+
 function bridgeSend(obj) {
   if (!bridge || bridge.readyState !== bridge.OPEN) return false;
   try {
@@ -214,11 +238,12 @@ const server = http.createServer((req, res) => {
   }
 
   if (isMcp) {
+    const tokenAuthenticated = verifyAccessToken(req);
     const candidates = getIngressCandidates(req);
     const trustedOpenAiIp = rangeNetworks.length ? candidates.find(ipAllowed) : null;
-    if (!trustedOpenAiIp) {
+    if (!tokenAuthenticated && !trustedOpenAiIp) {
       const cfRay = String(req.headers["cf-ray"] || "").slice(0, 128) || null;
-      console.warn(JSON.stringify({ event: "request_denied", reason: "source_ip", cfRay, candidates, rangesUpdatedAt, rangesFetchedAt, rangeError }));
+      console.warn(JSON.stringify({ event: "request_denied", reason: "auth", cfRay, candidates, rangesUpdatedAt, rangesFetchedAt, rangeError }));
       res.writeHead(403, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify({ error: "forbidden" }));
       return;
@@ -269,8 +294,12 @@ const server = http.createServer((req, res) => {
     admissions = Math.max(0, admissions - 1);
     requestBufferedBytes = Math.max(0, requestBufferedBytes - size);
     const id = crypto.randomUUID();
+    const bodyBuffer = Buffer.concat(chunks);
+    const rpc = extractRpcMeta(bodyBuffer);
     const timer = setTimeout(() => {
-      if (!pending.has(id)) return;
+      const p = pending.get(id);
+      if (!p) return;
+      console.warn(JSON.stringify({ event: "request_timeout", id, rpcId: p.rpcId, rpcMethod: p.rpcMethod, toolName: p.toolName }));
       bridgeSend({ type: "cancel", id });
       endPending(id, 504, { error: "upstream_timeout" });
     }, REQUEST_TIMEOUT_MS);
@@ -278,6 +307,7 @@ const server = http.createServer((req, res) => {
     const cfRay = String(req.headers["cf-ray"] || "").slice(0, 128) || null;
     pending.set(id, {
       res, timer, started: Date.now(), paused: false, cfRay,
+      rpcId: rpc.rpcId, rpcMethod: rpc.rpcMethod, toolName: rpc.toolName,
       queue: [], queuedBytes: 0, remoteEnded: false,
     });
 
@@ -295,7 +325,10 @@ const server = http.createServer((req, res) => {
       method: req.method,
       url: isProbe ? "/mcp" + url.search : url.pathname + url.search,
       headers: cleanHeaders(req.headers, true),
-      body: Buffer.concat(chunks).toString("base64"),
+      body: bodyBuffer.toString("base64"),
+      rpcId: rpc.rpcId,
+      rpcMethod: rpc.rpcMethod,
+      toolName: rpc.toolName,
     });
 
     if (!ok) endPending(id, 502, { error: "bridge_send_failed" });
@@ -382,13 +415,14 @@ wss.on("connection", ws => {
       if (p.queue.length || p.paused) {
         p.remoteEnded = true;
       } else {
-        console.log(JSON.stringify({ event: "request_done", ms: Date.now() - p.started, cfRay: p.cfRay }));
+        console.log(JSON.stringify({ event: "request_done", id: msg.id, rpcId: p.rpcId, rpcMethod: p.rpcMethod, toolName: p.toolName, ms: Date.now() - p.started, cfRay: p.cfRay }));
         endPending(msg.id);
       }
       return;
     }
 
     if (msg.type === "response_error") {
+      console.warn(JSON.stringify({ event: "request_error", id: msg.id, rpcId: p.rpcId, rpcMethod: p.rpcMethod, toolName: p.toolName, code: msg.code || "upstream_error" }));
       endPending(msg.id, 502, { error: msg.code || "upstream_error" });
     }
   });
@@ -399,7 +433,7 @@ wss.on("connection", ws => {
     bridgeSince = null;
     bridgeLastMessageAt = null;
     failAll("bridge_disconnected");
-    console.warn(JSON.stringify({ event: "bridge_disconnected" }));
+    console.warn(JSON.stringify({ event: "bridge_disconnected", pending: pending.size }));
   });
 });
 
@@ -424,8 +458,8 @@ setInterval(() => {
 await refreshRanges();
 setInterval(refreshRanges, RANGE_REFRESH_MS).unref();
 
-server.keepAliveTimeout = 300_000;
-server.headersTimeout = 310_000;
+server.keepAliveTimeout = 90_000;
+server.headersTimeout = 95_000;
 server.requestTimeout = 0;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(JSON.stringify({ event: "relay_v2_ready", port: PORT, maxInflight: MAX_INFLIGHT }));
