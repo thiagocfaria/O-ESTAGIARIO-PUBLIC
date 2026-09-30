@@ -148,10 +148,10 @@ function extractRpcMeta(body) {
   }
 }
 
-function bridgeSend(obj) {
-  if (!bridge || bridge.readyState !== bridge.OPEN) return false;
+function bridgeSend(obj, target = bridge) {
+  if (!target || target.readyState !== target.OPEN) return false;
   try {
-    bridge.send(JSON.stringify(obj));
+    target.send(JSON.stringify(obj));
     return true;
   } catch {
     return false;
@@ -163,6 +163,11 @@ function endPending(id, status = null, payload = null) {
   if (!p) return;
   clearTimeout(p.timer);
   pending.delete(id);
+  p.queue.length = 0;
+  p.queuedBytes = 0;
+  console.log(JSON.stringify({event: status ? 'request_error' : 'request_done', id,
+    rpcId:p.rpcId, rpcMethod:p.rpcMethod, toolName:p.toolName,
+    status:status || p.status || 200, ms:Date.now()-p.started, cfRay:p.cfRay}));
   if (p.res.destroyed) return;
   if (status && p.res.headersSent) {
     p.res.destroy();
@@ -175,36 +180,41 @@ function endPending(id, status = null, payload = null) {
   else p.res.end();
 }
 
-function failAll(reason = "bridge_disconnected") {
-  for (const id of [...pending.keys()]) endPending(id, 502, { error: reason });
+function failAll(reason = "bridge_disconnected", owner = bridge) {
+  for (const [id, p] of pending) {
+    if (p.owner === owner) endPending(id, 502, { error: reason });
+  }
 }
 
 function flushResponseQueue(id) {
   const p = pending.get(id);
   if (!p || p.res.destroyed) return;
   while (p.queue.length) {
-    const buf = p.queue[0];
-    const ok = p.res.write(buf);
+    // write(false) already accepted this chunk. Remove it exactly once.
+    const buf = p.queue.shift();
+    p.queuedBytes -= buf.length;
+    let ok;
+    try { ok = p.res.write(buf); }
+    catch { endPending(id, 502, {error:'client_write_failed'}); return; }
     if (!ok) {
       if (!p.paused) {
         p.paused = true;
-        bridgeSend({ type: "flow_pause", id });
+        bridgeSend({ type: "flow_pause", id }, p.owner);
       }
       return;
     }
-    p.queue.shift();
-    p.queuedBytes -= buf.length;
   }
 
   if (p.paused) {
     p.paused = false;
-    bridgeSend({ type: "flow_resume", id });
+    bridgeSend({ type: "flow_resume", id }, p.owner);
   }
 
   if (p.remoteEnded) endPending(id);
 }
 
 const server = http.createServer((req, res) => {
+  const receivedAt=Date.now();
   const url = new URL(req.url || "/", "http://relay.invalid");
 
   if (url.pathname === "/healthz") {
@@ -215,6 +225,8 @@ const server = http.createServer((req, res) => {
       bridgeSince,
       bridgeLastMessageAt,
       inflight: pending.size,
+      admissions,
+      requestBufferedBytes,
       maxInflight: MAX_INFLIGHT,
       ranges: rangeNetworks.length,
       rangesUpdatedAt,
@@ -270,14 +282,41 @@ const server = http.createServer((req, res) => {
   const chunks = [];
   let size = 0;
   let rejected = false;
+  let released = false;
+  let buffered = 0;
+  const releaseAdmission = () => {
+    if (released) return;
+    released = true;
+    clearTimeout(bodyTimer);
+    admissions = Math.max(0, admissions - 1);
+    requestBufferedBytes = Math.max(0, requestBufferedBytes - buffered);
+    buffered = 0;
+  };
+  const abortAdmission = () => {
+    rejected = true;
+    releaseAdmission();
+    chunks.length = 0;
+  };
+  const bodyTimer = setTimeout(() => {
+    abortAdmission();
+    if (!res.headersSent && !res.destroyed) {
+      res.writeHead(408, {"content-type":"application/json"});
+      res.end(JSON.stringify({error:'request_body_timeout'}));
+    }
+    req.destroy();
+  }, 20_000);
+  bodyTimer.unref?.();
+  req.once('aborted', abortAdmission);
+  req.once('error', abortAdmission);
+  req.once('close', () => { if (!req.complete) abortAdmission(); });
 
   req.on("data", chunk => {
     if (rejected) return;
     size += chunk.length;
     if (size > MAX_BODY || requestBufferedBytes + chunk.length > REQUEST_BUFFER_GLOBAL_LIMIT) {
       rejected = true;
-      admissions = Math.max(0, admissions - 1);
-      requestBufferedBytes = Math.max(0, requestBufferedBytes - (size - chunk.length));
+      releaseAdmission();
+      chunks.length = 0;
       res.writeHead(size > MAX_BODY ? 413 : 429, {
         "content-type": "application/json", "cache-control": "no-store", "retry-after": "1"
       });
@@ -286,27 +325,29 @@ const server = http.createServer((req, res) => {
       return;
     }
     requestBufferedBytes += chunk.length;
+    buffered += chunk.length;
     chunks.push(chunk);
   });
 
   req.on("end", () => {
     if (rejected) return;
-    admissions = Math.max(0, admissions - 1);
-    requestBufferedBytes = Math.max(0, requestBufferedBytes - size);
+    releaseAdmission();
+    const owner = bridge;
     const id = crypto.randomUUID();
     const bodyBuffer = Buffer.concat(chunks);
+    chunks.length = 0;
     const rpc = extractRpcMeta(bodyBuffer);
     const timer = setTimeout(() => {
       const p = pending.get(id);
       if (!p) return;
       console.warn(JSON.stringify({ event: "request_timeout", id, rpcId: p.rpcId, rpcMethod: p.rpcMethod, toolName: p.toolName }));
-      bridgeSend({ type: "cancel", id });
+      bridgeSend({ type: "cancel", id }, p.owner);
       endPending(id, 504, { error: "upstream_timeout" });
-    }, REQUEST_TIMEOUT_MS);
+    }, Math.max(1,REQUEST_TIMEOUT_MS-(Date.now()-receivedAt)));
 
     const cfRay = String(req.headers["cf-ray"] || "").slice(0, 128) || null;
     pending.set(id, {
-      res, timer, started: Date.now(), paused: false, cfRay,
+      res, timer, owner, started: Date.now(), paused: false, cfRay,
       rpcId: rpc.rpcId, rpcMethod: rpc.rpcMethod, toolName: rpc.toolName,
       queue: [], queuedBytes: 0, remoteEnded: false,
     });
@@ -314,9 +355,8 @@ const server = http.createServer((req, res) => {
     res.on("drain", () => flushResponseQueue(id));
     res.on("close", () => {
       if (!pending.has(id)) return;
-      bridgeSend({ type: "cancel", id });
-      clearTimeout(timer);
-      pending.delete(id);
+      bridgeSend({ type: "cancel", id }, owner);
+      endPending(id, 499, {error:'client_disconnected'});
     });
 
     const ok = bridgeSend({
@@ -329,7 +369,8 @@ const server = http.createServer((req, res) => {
       rpcId: rpc.rpcId,
       rpcMethod: rpc.rpcMethod,
       toolName: rpc.toolName,
-    });
+      remainingMs:Math.max(1,REQUEST_TIMEOUT_MS-(Date.now()-receivedAt)),
+    }, owner);
 
     if (!ok) endPending(id, 502, { error: "bridge_send_failed" });
   });
@@ -358,6 +399,7 @@ server.on("upgrade", (req, socket, head) => {
 
 wss.on("connection", ws => {
   if (bridge && bridge.readyState === bridge.OPEN) {
+    failAll('bridge_replaced', bridge);
     try { bridge.close(4001, "replaced"); } catch {}
   }
 
@@ -369,7 +411,9 @@ wss.on("connection", ws => {
 
   ws.on("pong", () => { ws.isAlive = true; });
 
+  ws.on('error', () => { failAll('bridge_socket_error', ws); });
   ws.on("message", raw => {
+    if (ws !== bridge) return;
     bridgeLastMessageAt = new Date().toISOString();
     let msg;
     try { msg = JSON.parse(raw.toString()); } catch { return; }
@@ -380,11 +424,12 @@ wss.on("connection", ws => {
     }
 
     const p = msg.id ? pending.get(msg.id) : null;
-    if (!p) return;
+    if (!p || p.owner !== ws) return;
 
     if (msg.type === "response_start") {
       try {
-        p.res.writeHead(Number(msg.status || 502), cleanHeaders(msg.headers || {}, false));
+        p.status = Number(msg.status || 502);
+        p.res.writeHead(p.status, cleanHeaders(msg.headers || {}, false));
       } catch {
         endPending(msg.id, 502, { error: "invalid_upstream_headers" });
       }
@@ -415,7 +460,6 @@ wss.on("connection", ws => {
       if (p.queue.length || p.paused) {
         p.remoteEnded = true;
       } else {
-        console.log(JSON.stringify({ event: "request_done", id: msg.id, rpcId: p.rpcId, rpcMethod: p.rpcMethod, toolName: p.toolName, ms: Date.now() - p.started, cfRay: p.cfRay }));
         endPending(msg.id);
       }
       return;
@@ -432,8 +476,9 @@ wss.on("connection", ws => {
     bridge = null;
     bridgeSince = null;
     bridgeLastMessageAt = null;
-    failAll("bridge_disconnected");
-    console.warn(JSON.stringify({ event: "bridge_disconnected", pending: pending.size }));
+    const affected = [...pending.values()].filter(p => p.owner === ws).length;
+    failAll("bridge_disconnected", ws);
+    console.warn(JSON.stringify({ event: "bridge_disconnected", pending: affected }));
   });
 });
 
@@ -460,7 +505,7 @@ setInterval(refreshRanges, RANGE_REFRESH_MS).unref();
 
 server.keepAliveTimeout = 90_000;
 server.headersTimeout = 95_000;
-server.requestTimeout = 0;
+server.requestTimeout = 20_000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(JSON.stringify({ event: "relay_v2_ready", port: PORT, maxInflight: MAX_INFLIGHT }));
 });
