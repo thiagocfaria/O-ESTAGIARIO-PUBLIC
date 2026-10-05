@@ -5,7 +5,7 @@ import { WebSocketServer } from "ws";
 import ipaddr from "ipaddr.js";
 
 const PORT = Number(process.env.PORT || 10000);
-const OPENAI_RANGES_URL = process.env.OPENAI_RANGES_URL || "https://openai.com/chatgpt-connectors.json";
+const OPENAI_RANGES_URL = "https://openai.com/chatgpt-connectors.json";
 const PUBLIC_KEYS = {
   server: fs.readFileSync(new URL("./bridge-public.pem", import.meta.url), "utf8"),
   pop: fs.readFileSync(new URL("./bridge-pop-public.pem", import.meta.url), "utf8"),
@@ -61,9 +61,7 @@ function normalizeIp(raw0) {
 
 function getIngressCandidates(req) {
   const cf = normalizeIp(req.headers["cf-connecting-ip"]);
-  const xffFirst = normalizeIp(String(req.headers["x-forwarded-for"] || "").split(",")[0]);
-  const remote = normalizeIp(req.socket.remoteAddress);
-  return [...new Set([cf, xffFirst, remote].filter(Boolean))];
+  return cf ? [cf] : [];
 }
 
 function parseNetwork(prefix) {
