@@ -579,6 +579,35 @@ wss.on("connection", ws => {
       return;
     }
 
+    if (msg.type === "process_route_remove") {
+      const pid = Number(msg.pid);
+      if (Number.isSafeInteger(pid) && pid > 0) {
+        const route = processRoutes.get(pid);
+        if (route?.backend === backend) {
+          processRoutes.delete(pid);
+          console.log(JSON.stringify({ event: "process_route_removed", pid, backend }));
+        } else if (route?.backend === "ambiguous" && Array.isArray(route.backends)) {
+          const remaining = route.backends.filter(name => name !== backend);
+          if (remaining.length === 1) {
+            processRoutes.set(pid, {
+              backend: remaining[0],
+              expiresAt: route.expiresAt,
+            });
+          } else if (remaining.length === 0) {
+            processRoutes.delete(pid);
+          } else {
+            processRoutes.set(pid, {
+              backend: "ambiguous",
+              backends: remaining,
+              expiresAt: route.expiresAt,
+            });
+          }
+          console.log(JSON.stringify({ event: "process_route_removed", pid, backend }));
+        }
+      }
+      return;
+    }
+
     const p = msg.id ? pending.get(msg.id) : null;
     if (!p || p.owner !== ws) return;
 
