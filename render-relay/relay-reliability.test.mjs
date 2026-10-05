@@ -1,5 +1,3 @@
-[Reading 200 lines from start (total: 221 lines, 21 remaining)]
-
 import fs from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
@@ -200,3 +198,24 @@ test('device marker and explicit path route before affinity; unknown device does
  assert.equal(f.routeApi.routeMcpRequest(call('get_config',{deviceId:'srv-app01'}),null,h).backend,'server');
  assert.equal(f.routeApi.routeMcpRequest(call('start_process',{command:'# tcf-device: pop-os\necho ok'}),null,h).backend,'pop');
  assert.equal(f.routeApi.routeMcpRequest(call('read_file',{path:'/home/u/fixture'}),null,h).backend,'pop');
+ assert.equal(f.routeApi.routeMcpRequest(call('get_config',{deviceId:'typo'}),null,h).routingError,'device_context_invalid');
+ assert.equal(f.routeApi.routeMcpRequest(call('get_config',{deviceId:'srv-app01'}),'pop',h).backend,'pop');
+ assert.equal(Object.hasOwn(JSON.parse(f.routeApi.routeMcpRequest(call('get_config',{deviceId:'srv-app01'}),'pop',h).body).params.arguments,'deviceId'),false);
+});
+test('resources/prompts/init/list follow affinity after second backend connects',()=>{
+ const f=fixture();f.ws.close();f.connectBackend('pop');const h={'x-openai-subject':'s','x-openai-session':'c'};
+ f.routeApi.routeMcpRequest(call('get_config'),null,h);f.connectBackend('server');
+ for(const method of ['initialize','tools/list','resources/list','resources/templates/list','prompts/list'])assert.equal(f.routeApi.routeMcpRequest(Buffer.from(JSON.stringify({jsonrpc:'2.0',id:1,method})),null,h).backend,'pop');
+});
+test('affinity TTL/limit bound memory, disconnected bound backend never migrates silently',()=>{
+ const f=fixture();f.ws.close();const pop=f.connectBackend('pop');
+ const h={'x-openai-session':'expires'};
+ f.routeApi.routeMcpRequest(call('get_config'),null,h);f.connectBackend('server');
+ const key=f.routeApi.sessionRouteKey(h);
+ vm.runInContext(`sessionRoutes.get(${JSON.stringify(key)}).expiresAt=0`,f.ctx);
+ assert.equal(f.routeApi.routeMcpRequest(call('get_config'),null,h).routingError,'device_context_required');
+ for(let i=0;i<4100;i++)f.routeApi.routeMcpRequest(call('get_config',{deviceId:'pop-os'}),null,{'x-openai-session':'bounded-'+i});
+ assert.ok(f.state().sessionRoutes.length<=4096);
+ pop.close(); // Routing to a bound offline device is left to HTTP 503, never to another device.
+ assert.equal(f.routeApi.routeMcpRequest(call('get_config'),null,{'x-openai-session':'bounded-4099'}).backend,'pop');
+});
