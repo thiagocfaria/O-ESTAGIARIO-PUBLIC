@@ -35,8 +35,9 @@ const usedNonces = new Map();
 let admissions = 0;
 let requestBufferedBytes = 0;
 const processRoutes = new Map();
-const PROCESS_ROUTE_TTL_MS = 6 * 60 * 60 * 1000;
+const PROCESS_ROUTE_TTL_MS = 24 * 60 * 60 * 1000;
 const PROCESS_ROUTE_CAPTURE_LIMIT = 64 * 1024;
+const PROCESS_ROUTE_SNAPSHOT_LIMIT = 4096;
 const PROCESS_FOLLOW_TOOLS = new Set([
   "read_process_output", "interact_with_process", "kill_process",
 ]);
@@ -161,29 +162,49 @@ function targetsPopPath(value) {
 }
 
 function processBackendFor(toolName, args) {
-  if (!PROCESS_FOLLOW_TOOLS.has(toolName)) return null;
+  if (!PROCESS_FOLLOW_TOOLS.has(toolName)) return { state: "not_process_tool" };
   const pid = Number(args?.pid);
-  if (!Number.isSafeInteger(pid) || pid <= 0) return null;
+  if (!Number.isSafeInteger(pid) || pid <= 0) return { state: "invalid_pid" };
   const route = processRoutes.get(pid);
-  if (!route) return null;
+  if (!route) return { state: "unknown", pid };
   if (route.expiresAt <= Date.now()) {
     processRoutes.delete(pid);
-    return null;
+    return { state: "unknown", pid };
   }
-  return route.backend;
+  if (route.backend === "ambiguous") {
+    return { state: "ambiguous", pid, backends: route.backends || [] };
+  }
+  return { state: "known", pid, backend: route.backend };
+}
+
+function learnProcessRoute(pid, backend, expiresAt, authoritative = false, source = "snapshot") {
+  if (!Number.isSafeInteger(pid) || pid <= 0 || !bridgeStates[backend]) return;
+  const now = Date.now();
+  const expiry = Math.min(
+    Number.isFinite(expiresAt) ? expiresAt : now + PROCESS_ROUTE_TTL_MS,
+    now + PROCESS_ROUTE_TTL_MS,
+  );
+  if (expiry <= now) return;
+  const current = processRoutes.get(pid);
+  if (!authoritative && current && current.expiresAt > now &&
+      current.backend !== backend && current.backend !== "ambiguous") {
+    const backends = [...new Set([current.backend, backend])].sort();
+    processRoutes.set(pid, { backend: "ambiguous", backends, expiresAt: Math.max(current.expiresAt, expiry) });
+    console.warn(JSON.stringify({ event: "process_route_ambiguous", pid, backends, source }));
+    return;
+  }
+  processRoutes.set(pid, { backend, expiresAt: expiry });
+  console.log(JSON.stringify({ event: "process_route_learned", pid, backend, source }));
+  while (processRoutes.size > PROCESS_ROUTE_SNAPSHOT_LIMIT) {
+    processRoutes.delete(processRoutes.keys().next().value);
+  }
 }
 
 function rememberProcessRoute(captured, backend) {
   if (!captured || !bridgeStates[backend]) return;
   const text = Buffer.isBuffer(captured) ? captured.toString("utf8") : String(captured);
   for (const match of text.matchAll(/Process started with PID\s+(\d+)/g)) {
-    const pid = Number(match[1]);
-    if (!Number.isSafeInteger(pid) || pid <= 0) continue;
-    processRoutes.set(pid, { backend, expiresAt: Date.now() + PROCESS_ROUTE_TTL_MS });
-    console.log(JSON.stringify({ event: "process_route_learned", pid, backend }));
-  }
-  while (processRoutes.size > 4096) {
-    processRoutes.delete(processRoutes.keys().next().value);
+    learnProcessRoute(Number(match[1]), backend, Date.now() + PROCESS_ROUTE_TTL_MS, true, "start_process");
   }
 }
 
@@ -201,11 +222,23 @@ function routeMcpRequest(body, fallbackBackend) {
 
     const toolName = typeof payload?.params?.name === "string" ? payload.params.name : "";
     const explicit = typeof args.deviceId === "string" ? args.deviceId : "";
-    const processBackend = processBackendFor(toolName, args);
+    const processRoute = processBackendFor(toolName, args);
     if (explicit === "pop-os") backend = "pop";
     else if (explicit === "srv-app01") backend = "server";
-    else if (processBackend) backend = processBackend;
-    else {
+    else if (processRoute.state === "known") backend = processRoute.backend;
+    else if (processRoute.state === "unknown" || processRoute.state === "ambiguous" ||
+             processRoute.state === "invalid_pid") {
+      return {
+        backend: null,
+        body: routedBody,
+        routingError: processRoute.state === "ambiguous"
+          ? "process_device_ambiguous"
+          : processRoute.state === "invalid_pid"
+            ? "process_pid_invalid"
+            : "process_device_unknown",
+        routingPid: processRoute.pid || null,
+      };
+    } else {
       for (const key of ["path", "file_path", "source", "destination", "cwd"]) {
         if (targetsPopPath(args[key])) { backend = "pop"; break; }
       }
@@ -416,6 +449,16 @@ const server = http.createServer((req, res) => {
     const originalBody = Buffer.concat(chunks);
     chunks.length = 0;
     const routed = routeMcpRequest(originalBody, isProbe ? "server" : pathBackend);
+    if (routed.routingError) {
+      console.warn(JSON.stringify({
+        event: "request_routing_blocked",
+        error: routed.routingError,
+        pid: routed.routingPid,
+      }));
+      res.writeHead(409, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify({ error: routed.routingError, pid: routed.routingPid }));
+      return;
+    }
     const targetBackend = routed.backend;
     const targetState = targetBackend ? bridgeStates[targetBackend] : null;
     if (!targetState?.ws || targetState.ws.readyState !== targetState.ws.OPEN) {
@@ -522,6 +565,17 @@ wss.on("connection", ws => {
 
     if (msg.type === "keepalive") {
       bridgeSend({ type: "keepalive_ack", ts: msg.ts || Date.now() }, ws);
+      return;
+    }
+
+    if (msg.type === "process_routes") {
+      const routes = Array.isArray(msg.routes) ? msg.routes.slice(0, PROCESS_ROUTE_SNAPSHOT_LIMIT) : [];
+      for (const route of routes) {
+        const pid = Number(route?.pid);
+        const expiresAt = Number(route?.expiresAt);
+        learnProcessRoute(pid, backend, expiresAt, false, "bridge_snapshot");
+      }
+      bridgeSend({ type: "process_routes_ack", count: routes.length, ts: Date.now() }, ws);
       return;
     }
 
