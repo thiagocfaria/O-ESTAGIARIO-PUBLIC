@@ -34,6 +34,12 @@ const pending = new Map();
 const usedNonces = new Map();
 let admissions = 0;
 let requestBufferedBytes = 0;
+const processRoutes = new Map();
+const PROCESS_ROUTE_TTL_MS = 6 * 60 * 60 * 1000;
+const PROCESS_ROUTE_CAPTURE_LIMIT = 64 * 1024;
+const PROCESS_FOLLOW_TOOLS = new Set([
+  "read_process_output", "interact_with_process", "kill_process",
+]);
 
 const HOP = new Set([
   "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
@@ -154,6 +160,33 @@ function targetsPopPath(value) {
   return typeof value === "string" && (value === "/home/u" || value.startsWith("/home/u/"));
 }
 
+function processBackendFor(toolName, args) {
+  if (!PROCESS_FOLLOW_TOOLS.has(toolName)) return null;
+  const pid = Number(args?.pid);
+  if (!Number.isSafeInteger(pid) || pid <= 0) return null;
+  const route = processRoutes.get(pid);
+  if (!route) return null;
+  if (route.expiresAt <= Date.now()) {
+    processRoutes.delete(pid);
+    return null;
+  }
+  return route.backend;
+}
+
+function rememberProcessRoute(captured, backend) {
+  if (!captured || !bridgeStates[backend]) return;
+  const text = Buffer.isBuffer(captured) ? captured.toString("utf8") : String(captured);
+  for (const match of text.matchAll(/Process started with PID\s+(\d+)/g)) {
+    const pid = Number(match[1]);
+    if (!Number.isSafeInteger(pid) || pid <= 0) continue;
+    processRoutes.set(pid, { backend, expiresAt: Date.now() + PROCESS_ROUTE_TTL_MS });
+    console.log(JSON.stringify({ event: "process_route_learned", pid, backend }));
+  }
+  while (processRoutes.size > 4096) {
+    processRoutes.delete(processRoutes.keys().next().value);
+  }
+}
+
 function routeMcpRequest(body, fallbackBackend) {
   let backend = fallbackBackend || "server";
   let routedBody = body;
@@ -166,9 +199,12 @@ function routeMcpRequest(body, fallbackBackend) {
     const args = payload?.params?.arguments;
     if (!args || typeof args !== "object" || Array.isArray(args)) return { backend, body: routedBody };
 
+    const toolName = typeof payload?.params?.name === "string" ? payload.params.name : "";
     const explicit = typeof args.deviceId === "string" ? args.deviceId : "";
+    const processBackend = processBackendFor(toolName, args);
     if (explicit === "pop-os") backend = "pop";
     else if (explicit === "srv-app01") backend = "server";
+    else if (processBackend) backend = processBackend;
     else {
       for (const key of ["path", "file_path", "source", "destination", "cwd"]) {
         if (targetsPopPath(args[key])) { backend = "pop"; break; }
@@ -281,6 +317,7 @@ const server = http.createServer((req, res) => {
       rangesUpdatedAt,
       rangesFetchedAt,
       rangeError,
+      processRoutes: processRoutes.size,
       limits: {
         requestBodyBytes: MAX_BODY,
         requestBufferGlobalBytes: REQUEST_BUFFER_GLOBAL_LIMIT,
@@ -400,9 +437,11 @@ const server = http.createServer((req, res) => {
 
     const cfRay = String(req.headers["cf-ray"] || "").slice(0, 128) || null;
     pending.set(id, {
-      res, timer, owner, started: Date.now(), paused: false, cfRay,
+      res, timer, owner, backend: targetBackend, started: Date.now(), paused: false, cfRay,
       rpcId: rpc.rpcId, rpcMethod: rpc.rpcMethod, toolName: rpc.toolName,
       queue: [], queuedBytes: 0, remoteEnded: false,
+      capture: rpc.toolName === "start_process" ? [] : null,
+      captureBytes: 0,
     });
 
     res.on("drain", () => flushResponseQueue(id));
@@ -501,6 +540,12 @@ wss.on("connection", ws => {
 
     if (msg.type === "response_chunk") {
       const buf = Buffer.from(msg.data || "", "base64");
+      if (p.capture && p.captureBytes < PROCESS_ROUTE_CAPTURE_LIMIT) {
+        const remaining = PROCESS_ROUTE_CAPTURE_LIMIT - p.captureBytes;
+        const piece = buf.length > remaining ? buf.subarray(0, remaining) : buf;
+        p.capture.push(piece);
+        p.captureBytes += piece.length;
+      }
       if (p.paused || p.queue.length) {
         p.queue.push(buf);
         p.queuedBytes += buf.length;
@@ -520,6 +565,11 @@ wss.on("connection", ws => {
     }
 
     if (msg.type === "response_end") {
+      if (p.capture) {
+        rememberProcessRoute(Buffer.concat(p.capture), p.backend);
+        p.capture = null;
+        p.captureBytes = 0;
+      }
       if (p.queue.length || p.paused) {
         p.remoteEnded = true;
       } else {
@@ -561,6 +611,7 @@ setInterval(() => {
 setInterval(() => {
   const now = Date.now();
   for (const [nonce, expires] of usedNonces) if (expires <= now) usedNonces.delete(nonce);
+  for (const [pid, route] of processRoutes) if (route.expiresAt <= now) processRoutes.delete(pid);
   for (const [backend, state] of Object.entries(bridgeStates)) {
     if (state.lastMessageAt && now - Date.parse(state.lastMessageAt) > KEEPALIVE_STALE_MS) {
       console.warn(JSON.stringify({ event: "bridge_application_keepalive_stale", backend }));
