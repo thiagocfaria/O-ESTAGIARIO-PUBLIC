@@ -177,7 +177,15 @@ function processBackendFor(toolName, args) {
   return { state: "known", pid, backend: route.backend };
 }
 
-function learnProcessRoute(pid, backend, expiresAt, authoritative = false, source = "snapshot") {
+function normalizeProcessIdentity(route) {
+  const bootId = typeof route?.bootId === "string" && route.bootId.length <= 128 ? route.bootId : null;
+  const startTicks = Number(route?.startTicks);
+  return bootId && Number.isSafeInteger(startTicks) && startTicks >= 0
+    ? { bootId, startTicks }
+    : null;
+}
+
+function learnProcessRoute(pid, backend, expiresAt, authoritative = false, source = "snapshot", identity = null) {
   if (!Number.isSafeInteger(pid) || pid <= 0 || !bridgeStates[backend]) return;
   const now = Date.now();
   const expiry = Math.min(
@@ -193,11 +201,58 @@ function learnProcessRoute(pid, backend, expiresAt, authoritative = false, sourc
     console.warn(JSON.stringify({ event: "process_route_ambiguous", pid, backends, source }));
     return;
   }
-  processRoutes.set(pid, { backend, expiresAt: expiry });
+  processRoutes.set(pid, { backend, expiresAt: expiry, ...(identity ? { identity } : {}) });
   console.log(JSON.stringify({ event: "process_route_learned", pid, backend, source }));
   while (processRoutes.size > PROCESS_ROUTE_SNAPSHOT_LIMIT) {
     processRoutes.delete(processRoutes.keys().next().value);
   }
+}
+
+function removeBackendFromProcessRoute(pid, backend, source = "remove") {
+  const route = processRoutes.get(pid);
+  if (!route) return false;
+  if (route.backend === backend) {
+    processRoutes.delete(pid);
+    console.log(JSON.stringify({ event: "process_route_removed", pid, backend, source }));
+    return true;
+  }
+  if (route.backend === "ambiguous" && Array.isArray(route.backends) && route.backends.includes(backend)) {
+    const remaining = route.backends.filter(name => name !== backend);
+    if (remaining.length === 1) {
+      processRoutes.set(pid, { backend: remaining[0], expiresAt: route.expiresAt });
+    } else if (remaining.length === 0) {
+      processRoutes.delete(pid);
+    } else {
+      processRoutes.set(pid, { backend: "ambiguous", backends: remaining, expiresAt: route.expiresAt });
+    }
+    console.log(JSON.stringify({ event: "process_route_removed", pid, backend, source }));
+    return true;
+  }
+  return false;
+}
+
+function applyProcessRouteSnapshot(backend, rawRoutes) {
+  const routes = Array.isArray(rawRoutes) ? rawRoutes.slice(0, PROCESS_ROUTE_SNAPSHOT_LIMIT) : [];
+  const incoming = new Set();
+  for (const route of routes) {
+    const pid = Number(route?.pid);
+    const expiresAt = Number(route?.expiresAt);
+    if (!Number.isSafeInteger(pid) || pid <= 0) continue;
+    incoming.add(pid);
+    learnProcessRoute(pid, backend, expiresAt, false, "bridge_snapshot", normalizeProcessIdentity(route));
+  }
+  let removed = 0;
+  for (const [pid, route] of [...processRoutes.entries()]) {
+    const belongsToBackend = route?.backend === backend ||
+      (route?.backend === "ambiguous" && Array.isArray(route.backends) && route.backends.includes(backend));
+    if (belongsToBackend && !incoming.has(pid) && removeBackendFromProcessRoute(pid, backend, "bridge_snapshot_replace")) {
+      removed += 1;
+    }
+  }
+  console.log(JSON.stringify({
+    event: "process_route_snapshot_applied", backend, received: incoming.size, removed, total: processRoutes.size,
+  }));
+  return { received: incoming.size, removed };
 }
 
 function rememberProcessRoute(captured, backend) {
@@ -569,41 +624,20 @@ wss.on("connection", ws => {
     }
 
     if (msg.type === "process_routes") {
-      const routes = Array.isArray(msg.routes) ? msg.routes.slice(0, PROCESS_ROUTE_SNAPSHOT_LIMIT) : [];
-      for (const route of routes) {
-        const pid = Number(route?.pid);
-        const expiresAt = Number(route?.expiresAt);
-        learnProcessRoute(pid, backend, expiresAt, false, "bridge_snapshot");
-      }
-      bridgeSend({ type: "process_routes_ack", count: routes.length, ts: Date.now() }, ws);
+      const applied = applyProcessRouteSnapshot(backend, msg.routes);
+      bridgeSend({
+        type: "process_routes_ack",
+        count: applied.received,
+        removed: applied.removed,
+        ts: Date.now(),
+      }, ws);
       return;
     }
 
     if (msg.type === "process_route_remove") {
       const pid = Number(msg.pid);
       if (Number.isSafeInteger(pid) && pid > 0) {
-        const route = processRoutes.get(pid);
-        if (route?.backend === backend) {
-          processRoutes.delete(pid);
-          console.log(JSON.stringify({ event: "process_route_removed", pid, backend }));
-        } else if (route?.backend === "ambiguous" && Array.isArray(route.backends)) {
-          const remaining = route.backends.filter(name => name !== backend);
-          if (remaining.length === 1) {
-            processRoutes.set(pid, {
-              backend: remaining[0],
-              expiresAt: route.expiresAt,
-            });
-          } else if (remaining.length === 0) {
-            processRoutes.delete(pid);
-          } else {
-            processRoutes.set(pid, {
-              backend: "ambiguous",
-              backends: remaining,
-              expiresAt: route.expiresAt,
-            });
-          }
-          console.log(JSON.stringify({ event: "process_route_removed", pid, backend }));
-        }
+        removeBackendFromProcessRoute(pid, backend, "bridge_remove");
       }
       return;
     }
