@@ -515,7 +515,8 @@ const server = http.createServer((req, res) => {
     const tokenAuthenticated = verifyAccessToken(req);
     const candidates = getIngressCandidates(req);
     const trustedOpenAiIp = rangeNetworks.length ? candidates.find(ipAllowed) : null;
-    if (!tokenAuthenticated && !trustedOpenAiIp) {
+    // Client IP headers are not authentication; require a valid bearer token.
+    if (!tokenAuthenticated) {
       const cfRay = String(req.headers["cf-ray"] || "").slice(0, 128) || null;
       console.warn(JSON.stringify({ event: "request_denied", reason: "auth", cfRay, candidates, rangesUpdatedAt, rangesFetchedAt, rangeError }));
       res.writeHead(403, { "content-type": "application/json", "cache-control": "no-store" });
