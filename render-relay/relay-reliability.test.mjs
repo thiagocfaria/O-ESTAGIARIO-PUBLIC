@@ -18,7 +18,7 @@ function fixture() {
  vm.runInContext(text,ctx,{timeout:1000});
  const ws=new WS();ws.tcfBackend='server';wss.emit('connection',ws);
  function request(data='{}',auth=true,end=true,headers={}){
-  const req=new EventEmitter();Object.assign(req,{url:'/mcp',method:'POST',headers:auth?{authorization:'Bearer TEST_ONLY',...headers}:{},socket:{remoteAddress:'127.0.0.1'},complete:false});
+  const req=new EventEmitter();Object.assign(req,{url:'/mcp',method:'POST',headers:auth?{authorization:'Bearer TEST_ONLY',...headers}:{...headers},socket:{remoteAddress:'127.0.0.1'},complete:false});
   req.destroy=()=>{req.emit('aborted');req.emit('close');};
   const res=new EventEmitter();Object.assign(res,{headersSent:false,destroyed:false,data:[],slow:false});
   res.writeHead=(status)=>{res.status=status;res.headersSent=true;};
@@ -66,6 +66,15 @@ test('client close and request deadline release pending and send cancellation',(
  assert.ok(timer,'request deadline timer missing');timer.fn();assert.equal(b.res.status,504);assert.equal(f.state().pending,0);
 });
 test('no credential and no trusted IP stays forbidden',()=>{const f=fixture(),a=f.request('{}',false);assert.equal(a.res.status,403);assert.equal(f.state().pending,0);});
+test('spoofed trusted client IP without bearer token is rejected',()=> {
+ const f=fixture();
+ f.ctx.ipaddr.parse=()=>({kind:()=> 'ipv4',match:()=>true});
+ vm.runInContext("rangeNetworks = [[{kind:()=> 'ipv4'}, 32]]",f.ctx);
+ const {res}=f.request('{}',false,true,{'cf-connecting-ip':'203.0.113.20'});
+ assert.equal(res.status,403);
+ assert.equal(f.state().pending,0);
+});
+
 
 test('authoritative process snapshot removes routes omitted by backend',()=>{
  const f=fixture(),future=Date.now()+60_000;
